@@ -6,7 +6,8 @@ Wraps MediaPipe Hands to detect one hand and return its 21 landmarks.
 
 import mediapipe as mp
 import cv2
-
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
 
 class HandTracker:
     # MediaPipe landmark indices
@@ -28,16 +29,16 @@ class HandTracker:
     PINKY_MCP    = 17
     
     def __init__(self, max_hands=1, detection_conf=0.7, tracking_conf=0.7):
-        self._mp_hands  = mp.solutions.hands
-        self._mp_draw   = mp.solutions.drawing_utils
-        self._mp_styles = mp.solutions.drawing_styles
-
-        self.hands = self._mp_hands.Hands(
-            static_image_mode=False,
-            max_num_hands=max_hands,
-            min_detection_confidence=detection_conf,
+        base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
+        options = vision.HandLandmarkerOptions(
+            base_options=base_options,
+            num_hands=max_hands,
+            min_hand_detection_confidence=detection_conf,
+            min_hand_presence_confidence=tracking_conf,
             min_tracking_confidence=tracking_conf,
+            running_mode=vision.RunningMode.IMAGE
         )
+        self.detector = vision.HandLandmarker.create_from_options(options)
 
     def process(self, frame_bgr):
         """
@@ -48,30 +49,36 @@ class HandTracker:
                          or None if no hand found.
         """
         rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-        results = self.hands.process(rgb)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
+        results = self.detector.detect(mp_image)
 
         annotated = frame_bgr.copy()
         landmarks = None
 
-        if results.multi_hand_landmarks:
-            hand_lm = results.multi_hand_landmarks[0]   # first hand only
-
-            # Draw skeleton
-            self._mp_draw.draw_landmarks(
-                annotated,
-                hand_lm,
-                self._mp_hands.HAND_CONNECTIONS,
-                self._mp_styles.get_default_hand_landmarks_style(),
-                self._mp_styles.get_default_hand_connections_style(),
-            )
-
+        if results.hand_landmarks:
+            landmarks = []
             h, w, _ = frame_bgr.shape
-            landmarks = [
-                (lm.x * w, lm.y * h, lm.z)
-                for lm in hand_lm.landmark
-            ]
+            
+            for hand_lm in results.hand_landmarks:
+                pts = [(int(lm.x * w), int(lm.y * h)) for lm in hand_lm]
+                
+                # Draw connections
+                connections = vision.HandLandmarksConnections.HAND_CONNECTIONS
+                for connection in connections:
+                    start_idx = connection.start
+                    end_idx = connection.end
+                    cv2.line(annotated, pts[start_idx], pts[end_idx], (0, 255, 0), 2)
+                
+                # Draw points
+                for pt in pts:
+                    cv2.circle(annotated, pt, 4, (0, 0, 255), -1)
+
+                landmarks.append([
+                    (lm.x * w, lm.y * h, lm.z)
+                    for lm in hand_lm
+                ])
 
         return landmarks, annotated
 
     def close(self):
-        self.hands.close()
+        self.detector.close()

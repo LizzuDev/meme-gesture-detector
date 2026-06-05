@@ -22,7 +22,7 @@ from camera          import Camera
 from hand_tracker    import HandTracker
 from gesture_detector import GestureDetector
 from overlay         import OverlayRenderer
-
+from tictactoe       import TicTacToeMode
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 
@@ -33,7 +33,7 @@ CAMERA_SOURCE     = 0          # 0 = first webcam / DroidCam USB
 FRAME_WIDTH       = 640
 FRAME_HEIGHT      = 480
 COOLDOWN_SECONDS  = 1      # How long the meme stays visible after gesture ends
-WINDOW_TITLE      = "Meme Gesture Detector  |  Q = quit"
+WINDOW_TITLE      = "Detector de Memes  |  Q = Salir  |  M = Modo"
 
 SCREENSHOT_DIR    = "screenshots"
 
@@ -44,45 +44,48 @@ def main():
     os.makedirs(SCREENSHOT_DIR, exist_ok=True)
 
     camera   = Camera(CAMERA_SOURCE, FRAME_WIDTH, FRAME_HEIGHT)
-    tracker  = HandTracker(max_hands=1, detection_conf=0.7, tracking_conf=0.7)
+    tracker  = HandTracker(max_hands=2, detection_conf=0.7, tracking_conf=0.7)
     detector = GestureDetector()
     renderer = OverlayRenderer(memes_dir="memes")
+    ttt_game = TicTacToeMode()
 
-    # Cooldown state
+    # State
+    mode = "MEMES"
     displayed_gesture = "NONE"
     last_trigger_time = 0.0
 
-    print("[Main] Running — press Q or ESC to quit, S to screenshot.")
+    print("[Principal] Ejecutando — presiona Q o ESC para salir, S para capturar, M para cambiar de modo.")
 
     while True:
         frame = camera.read()
         if frame is None:
-            print("[Main] Frame read failed — check your camera source.")
+            print("[Principal] Error al leer la camara — verifica el origen de tu video.")
             break
 
         # ── Hand tracking ──────────────────────────────────────────────────
         landmarks, annotated_frame = tracker.process(frame)
 
-        # ── Gesture detection ──────────────────────────────────────────────
-        raw_gesture = detector.detect(landmarks)
-
         now = time.time()
+        
+        if mode == "MEMES":
+            # ── Gesture detection ──────────────────────────────────────────────
+            raw_gesture = detector.detect(landmarks)
 
-        if raw_gesture != "NONE":
-            # Fresh gesture → start / extend the cooldown window
-            displayed_gesture = raw_gesture
-            last_trigger_time = now
-        elif now - last_trigger_time > COOLDOWN_SECONDS:
-            # Cooldown expired and no gesture → clear the meme
-            displayed_gesture = "NONE"
+            if raw_gesture != "NONE":
+                displayed_gesture = raw_gesture
+                last_trigger_time = now
+            elif now - last_trigger_time > COOLDOWN_SECONDS:
+                displayed_gesture = "NONE"
 
-        # ── Render ────────────────────────────────────────────────────────
-        output = renderer.render(annotated_frame, displayed_gesture)
+            # ── Render ────────────────────────────────────────────────────────
+            output = renderer.render(annotated_frame, displayed_gesture)
+        else:
+            output = ttt_game.process_and_render(annotated_frame, landmarks)
 
-        # Optional: show FPS in top-left corner
+        # UI elements
         fps_text = f"FPS: {int(1 / max(time.time() - now, 1e-6))}"
-        cv2.putText(output, fps_text, (10, 25),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        cv2.putText(output, fps_text, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        cv2.putText(output, "M = Cambiar Modo", (output.shape[1] - 220, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
         cv2.imshow(WINDOW_TITLE, output)
 
@@ -91,18 +94,26 @@ def main():
 
         if key in (ord('q'), ord('Q'), 27):   # Q or ESC
             break
+            
+        if key in (ord('m'), ord('M')):
+            mode = "TICTACTOE" if mode == "MEMES" else "MEMES"
+            if mode == "TICTACTOE":
+                ttt_game.reset()
+                print("[Principal] Cambiado a Modo 3 en Raya.")
+            else:
+                print("[Principal] Cambiado a Modo Memes.")
 
         if key in (ord('s'), ord('S')):       # S → screenshot
             ts   = time.strftime("%Y%m%d_%H%M%S")
             path = os.path.join(SCREENSHOT_DIR, f"meme_{ts}.png")
             cv2.imwrite(path, output)
-            print(f"[Main] Screenshot saved → {path}")
+            print(f"[Principal] Captura guardada → {path}")
 
     # ── Cleanup ───────────────────────────────────────────────────────────────
     camera.release()
     tracker.close()
     cv2.destroyAllWindows()
-    print("[Main] Closed.")
+    print("[Principal] Cerrado.")
 
 
 if __name__ == "__main__":
