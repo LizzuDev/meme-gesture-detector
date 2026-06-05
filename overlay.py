@@ -22,7 +22,14 @@ GESTURE_TO_FILE = {
     "THUMBS_DOWN": "sad-hamster.jpg",
     "GLASSES":    "cat-glasses.jpg",
     "ITALIAN":    "cat-doubt.jpg",
-    "SHH":        "cat-shh.jpg",
+    "TONGUE_OUT": "cat-tongue.jpg",
+    "HAPPY":      "monkey-happy-teeth.jpg",
+    "ANGRY":      "angry-face-cat.jpg",
+    "GUN":        "cat-gun-signal.jpg",
+    "PEDRO_RACCOON": "pedro-racoon.gif",
+    "WAVING":     "iguana-waving.gif",
+    "WINKING":    "bunny-winking.jpg",
+    "SURPRISED":  "cat-surprised.gif",
 }
 
 GESTURE_LABELS = {
@@ -38,7 +45,14 @@ GESTURE_LABELS = {
     "THUMBS_DOWN": "No era necesario...",
     "GLASSES":    "De hecho",
     "ITALIAN":    "Literalmente quedé",
-    "SHH":        "Shhhh",
+    "TONGUE_OUT": "😛",
+    "HAPPY":      "Sonrisa Colgate",
+    "ANGRY":      "Ya me enojé",
+    "GUN":        "Noooooooo",
+    "PEDRO_RACCOON": "¡Pedro, Pedro, Pedro!",
+    "WAVING":     "¡Holaaaaa!",
+    "WINKING":    "Guiño Guiño",
+    "SURPRISED":  "¡Sorpresa!",
     "NONE":      "",
 }
 

@@ -1,195 +1,121 @@
 <div align="center">
 
-# 🐹 Meme Gesture Detector
+# 🐹 Meme Gesture Detector (Web Edition)
 
-**Real-time hand gesture recognition that triggers meme reactions — running entirely on CPU**
+**Detección de gestos manuales y expresiones faciales en tiempo real que disparan memes en tu navegador.**
 
-![Python](https://img.shields.io/badge/Python-3.8--3.11-blue?style=flat-square&logo=python)
-![OpenCV](https://img.shields.io/badge/OpenCV-4.8+-green?style=flat-square&logo=opencv)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=flat-square&logo=docker)
+![React](https://img.shields.io/badge/React-18-61dafb?style=flat-square&logo=react)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=flat-square&logo=fastapi)
 ![MediaPipe](https://img.shields.io/badge/MediaPipe-0.10+-red?style=flat-square)
-![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey?style=flat-square&logo=windows)
-![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)
 
 <br/>
 
-> *Show a thumbs-up → hamster approves. Flash a peace sign → hamster vibes. No GPU needed.*
+> *Levanta tus manos → aparece el mapache Pedro. Apunta con tu dedo → "¡Freeze!". Todo procesado por IA en tiempo real.*
 
 </div>
 
 ---
 
-## What Is This?
+## 🚀 Inicio Rápido (Con Docker)
 
-A lightweight computer vision app that watches your hand through a webcam and shows a matching meme beside you — in real time.
+La forma más fácil y recomendada de levantar el proyecto en cualquier computadora sin instalar librerías manualmente es usando Docker. 
 
-Built as a beginner-friendly introduction to:
-- Real-time video processing
-- Hand landmark detection with MediaPipe
-- Gesture classification logic
-- Image overlay rendering
+**Requisitos previos:** Tener [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado.
 
-No neural network training. No GPU required. Just Python + a webcam.
+1. **Clonar el repositorio:**
+   ```bash
+   git clone https://github.com/tu-usuario/meme-gesture-detector.git
+   cd meme-gesture-detector
+   ```
 
----
+2. **Levantar la aplicación:**
+   ```bash
+   docker compose up --build
+   ```
+   *(Este comando descargará Python, Node.js, instalará todas las dependencias y arrancará tanto el servidor de IA como la interfaz web automáticamente).*
 
-## Gestures & Memes
-
-| Gesture | Hand Shape | Meme |
-|---------|-----------|------|
-| 👍 Thumbs Up | Only thumb extended | Hamster giving thumbs up |
-| ✌️ Peace | Index + middle fingers up | Hamster peace sign |
-| 🖐️ Open Hand | All five fingers extended | Hamster waving |
-| ✊ Fist | All fingers closed | Hamster fist |
-| ☝️ Pointing | Only index finger up | Thinking monkey |
+3. **Abrir el navegador:**
+   Ve a `http://localhost:5173`. 
+   Da permisos a tu cámara web y ¡listo!
 
 ---
 
-## Project Structure
+## 💻 Inicio Manual (Sin Docker)
 
-```
-meme_detector/
-│
-├── main.py               ← Entry point, main loop
-├── camera.py             ← Webcam capture + mirror mode
-├── hand_tracker.py       ← MediaPipe hand landmark detection
-├── gesture_detector.py   ← Gesture classification logic
-├── overlay.py            ← Meme image loading + side-by-side rendering
-│
-├── memes/
-│   ├── hamster_thumbsup.png
-│   ├── hamster_peace.png
-│   ├── hamster_open.png
-│   ├── hamster_fist.png
-│   └── monkey_pointing.png
-│
-├── screenshots/          ← Auto-created when you press S
-├── requirements.txt
-└── README.md
-```
+Si prefieres correrlo nativamente en tu máquina:
 
----
-
-## Requirements
-
-- Python **3.8 – 3.11** (MediaPipe does not support 3.12+ on Windows yet)
-- A webcam — built-in, or a phone via **DroidCam** / **Iriun Webcam**
-- No GPU needed — runs on a mid-range CPU
-
----
-
-## Setup
-
+### 1. Servidor Backend (Python / FastAPI)
 ```bash
-# 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/meme-gesture-detector.git
-cd meme-gesture-detector
-
-# 2. Create a virtual environment
+# Crear entorno virtual e instalar dependencias
 python -m venv venv
-.\venv\Scripts\activate        # Windows PowerShell
-# source venv/bin/activate     # macOS / Linux
-
-# 3. Install dependencies
+.\venv\Scripts\activate   # En Windows
 pip install -r requirements.txt
 
-# 4. Add your meme images to memes/
-#    File names must match exactly as listed above
-
-# 5. Run
-python main.py
+# Ejecutar servidor en el puerto 8000
+python server.py
 ```
 
----
-
-## Camera Options
-
-| Setup | Setting in `main.py` |
-|-------|----------------------|
-| Default webcam | `CAMERA_SOURCE = 0` |
-| DroidCam USB | `CAMERA_SOURCE = 1` or `2` |
-| DroidCam Wi-Fi | `CAMERA_SOURCE = "http://192.168.x.x:4747/video"` |
-| Iriun Webcam | `CAMERA_SOURCE = 0` or `1` |
-
----
-
-## Controls
-
-| Key | Action |
-|-----|--------|
-| `Q` or `ESC` | Quit |
-| `S` | Save screenshot to `screenshots/` |
-
----
-
-## How It Works
-
+### 2. Interfaz Frontend (Node.js / Vite)
+Abre *otra* terminal:
+```bash
+cd frontend
+npm install -g pnpm       # Si no tienes pnpm instalado
+pnpm install
+pnpm run dev
 ```
-Webcam Feed
-    ↓
-OpenCV — captures and mirrors each frame
-    ↓
-MediaPipe Hands — detects 21 landmarks on your hand
-    ↓
-Gesture Detector — classifies finger positions into a gesture
-    ↓
-Overlay Renderer — picks the matching meme image
-    ↓
-Output Window — shows camera + meme side by side
-```
-
-The gesture classifier works by checking which fingers are extended using landmark Y-coordinates and distance calculations — no machine learning inference at runtime.
+Ve a `http://localhost:5173`.
 
 ---
 
-## Tips for Best Detection
+## 🎭 Gestos Soportados
 
-- Make sure your hand is **well lit**
-- Keep your hand **fully visible** in the frame
-- Hold gestures **steady** for ~0.5 seconds
-- Works best against a **plain background**
+El sistema detecta formas de las manos y expresiones de la cara.
 
----
+### Gestos con las manos:
+* **Pistola (Apuntar):** Índice y pulgar extendidos hacia afuera.
+* **Corazón Coreano:** Índice y pulgar cruzados.
+* **Mapache Pedro:** Levanta **ambas** manos completamente abiertas.
+* **Saludar:** Levanta una mano abierta y ladéala hacia un lado.
+* **Paz:** Dedo índice y medio arriba.
+* **Pulgar arriba / abajo:** Para aprobar o desaprobar.
+* **Gafas (OK):** Haz círculos con índice y pulgar en ambas manos.
 
-## Troubleshooting
-
-**Camera won't open**
-→ Try changing `CAMERA_SOURCE` to `1` or `2` in `main.py`
-
-**Gestures not detecting correctly**
-→ Check your lighting and make sure your full hand is in frame
-
-**MediaPipe install fails**
-→ Confirm you are using Python 3.8–3.11, not 3.12+
-
----
-
-## Future Ideas
-
-- [ ] Multiple hand support
-- [ ] Sound effects per gesture
-- [ ] Animated GIF memes
-- [ ] Gesture score / combo system
-- [ ] Pose matching with memes
-- [ ] AR-style effects (aura, filters)
+### Expresiones Faciales:
+* **Sonrisa:** Sonríe frente a la cámara (boca abierta o cerrada).
+* **Sorpresa:** Abre la boca formando una "O" y levanta tus cejas.
+* **Guiño:** Cierra claramente un ojo.
+* **Lengua:** Abre ligeramente la boca con los ojos relajados.
 
 ---
 
-## Tech Stack
+## 🏗️ Arquitectura del Sistema
 
-| Library | Purpose |
-|---------|---------|
-| [OpenCV](https://opencv.org/) | Video capture, frame rendering, overlays |
-| [MediaPipe](https://mediapipe.dev/) | Real-time hand landmark tracking |
-| [NumPy](https://numpy.org/) | Array and frame operations |
+La aplicación está dividida en dos capas modernas:
+
+1. **Frontend (React + Three.js):**
+   * Captura la webcam desde tu navegador y envía los cuadros de imagen ligeros por WebSocket.
+   * Dibuja los memes en la pantalla.
+   * Renderiza un modelo 3D (Visor Holográfico) que gira según tus gestos.
+
+2. **Backend (Python + FastAPI + MediaPipe):**
+   * Recibe las imágenes vía WebSocket.
+   * Procesa la geometría de tus manos (21 puntos clave) y cara (blendshapes).
+   * Clasifica qué gesto estás haciendo basándose en distancias matemáticas y ángulos.
+   * Devuelve el resultado al instante a la interfaz.
 
 ---
 
-## License
+## 📝 Personalizar Memes
 
-free to use, modify, and share.
+Si quieres agregar tus propios memes:
+1. Pega tu archivo (ej. `mi-meme.jpg`) en la carpeta `frontend/public/memes/`.
+2. Ve a `overlay.py` en el backend y asigna tu archivo a un GESTO.
+3. Ve a `App.tsx` en el frontend y agrega la misma asignación.
+¡Se actualizará en tiempo real!
 
 ---
 
 <div align="center">
-Made with 🐹 and way too much free time
+Desarrollado combinando Visión Computacional Clásica con Tecnologías Web Modernas 🚀
 </div>

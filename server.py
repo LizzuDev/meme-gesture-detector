@@ -1,3 +1,11 @@
+"""
+Servidor Central de IA (Backend)
+--------------------------------
+Este archivo es el corazón de la aplicación. Actúa como un puente en tiempo real:
+recibe los fotogramas de tu cámara web que envía el navegador, los analiza usando 
+nuestros detectores de IA (para buscar manos y caras), y luego responde al instante
+con el gesto detectado para que la página pueda mostrar el meme correcto.
+"""
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import cv2
@@ -8,6 +16,8 @@ import time
 
 from hand_tracker import HandTracker
 from gesture_detector import GestureDetector
+from face_tracker import FaceTracker
+from face_detector import FaceDetector
 from tictactoe import TicTacToeMode
 from overlay import GESTURE_LABELS
 
@@ -23,7 +33,9 @@ app.add_middleware(
 
 # Shared AI instances
 tracker = HandTracker(max_hands=2, detection_conf=0.7, tracking_conf=0.7)
+face_tracker = FaceTracker()
 detector = GestureDetector()
+face_detector = FaceDetector()
 ttt_game = TicTacToeMode()
 
 @app.websocket("/ws")
@@ -58,6 +70,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
             # Process frame
             landmarks, _ = tracker.process(frame)
+            face_landmarks, face_blendshapes, _ = face_tracker.process(frame)
             
             lms_json = []
             if landmarks:
@@ -66,13 +79,18 @@ async def websocket_endpoint(websocket: WebSocket):
                     lms_json.append(hand_json)
 
             now = time.time()
-            response = {"mode": mode, "landmarks": lms_json}
+            raw_gesture = detector.detect(landmarks) if landmarks else "NONE"
+            
+            response = {"mode": mode, "landmarks": lms_json, "gesture": raw_gesture}
             
             if mode == "MEMES":
-                raw_gesture = detector.detect(landmarks)
+                raw_face = face_detector.detect(face_landmarks, face_blendshapes)
                 
                 if raw_gesture != "NONE":
                     displayed_gesture = raw_gesture
+                    last_trigger_time = now
+                elif raw_face != "NONE":
+                    displayed_gesture = raw_face
                     last_trigger_time = now
                 elif now - last_trigger_time > COOLDOWN_SECONDS:
                     displayed_gesture = "NONE"
@@ -90,3 +108,9 @@ async def websocket_endpoint(websocket: WebSocket):
         print("Client disconnected")
     except Exception as e:
         print(f"Error: {e}")
+
+if __name__ == "__main__":
+    import uvicorn
+    print("Starting server on ws://localhost:8000")
+    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
+

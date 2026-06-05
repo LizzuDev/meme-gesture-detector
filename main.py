@@ -21,6 +21,8 @@ import os
 from camera          import Camera
 from hand_tracker    import HandTracker
 from gesture_detector import GestureDetector
+from face_tracker     import FaceTracker
+from face_detector    import FaceDetector
 from overlay         import OverlayRenderer
 from tictactoe       import TicTacToeMode
 
@@ -46,6 +48,8 @@ def main():
     camera   = Camera(CAMERA_SOURCE, FRAME_WIDTH, FRAME_HEIGHT)
     tracker  = HandTracker(max_hands=2, detection_conf=0.7, tracking_conf=0.7)
     detector = GestureDetector()
+    face_tracker = FaceTracker()
+    face_detector = FaceDetector()
     renderer = OverlayRenderer(memes_dir="memes")
     ttt_game = TicTacToeMode()
 
@@ -62,17 +66,22 @@ def main():
             print("[Principal] Error al leer la camara — verifica el origen de tu video.")
             break
 
-        # ── Hand tracking ──────────────────────────────────────────────────
+        # ── Hand + Face tracking ─────────────────────────────────────────
         landmarks, annotated_frame = tracker.process(frame)
+        face_landmarks, face_blendshapes, annotated_frame = face_tracker.process(annotated_frame)
 
         now = time.time()
         
         if mode == "MEMES":
             # ── Gesture detection ──────────────────────────────────────────────
             raw_gesture = detector.detect(landmarks)
+            raw_face = face_detector.detect(face_landmarks, face_blendshapes)
 
             if raw_gesture != "NONE":
                 displayed_gesture = raw_gesture
+                last_trigger_time = now
+            elif raw_face != "NONE":
+                displayed_gesture = raw_face
                 last_trigger_time = now
             elif now - last_trigger_time > COOLDOWN_SECONDS:
                 displayed_gesture = "NONE"
@@ -112,6 +121,7 @@ def main():
     # ── Cleanup ───────────────────────────────────────────────────────────────
     camera.release()
     tracker.close()
+    face_tracker.close()
     cv2.destroyAllWindows()
     print("[Principal] Cerrado.")
 

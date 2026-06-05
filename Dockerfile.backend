@@ -1,0 +1,25 @@
+# Usamos una imagen ligera de Python 3.10
+FROM python:3.10-slim
+
+# Configuraciones para que Python no guarde caché y los logs fluyan directo a la consola
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Instalamos las herramientas gráficas básicas que OpenCV necesita internamente
+RUN apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0 && rm -rf /var/lib/apt/lists/*
+
+# Copiamos la lista de dependencias y las instalamos
+COPY requirements.txt .
+# Aseguramos usar opencv-python-headless ya que Docker no tiene pantalla conectada
+RUN pip install --no-cache-dir -r requirements.txt opencv-python-headless
+
+# Copiamos el resto del cerebro de IA
+COPY . .
+
+# Exponemos el puerto de comunicación (WebSockets)
+EXPOSE 8000
+
+# Arrancamos el servidor de forma que acepte conexiones desde afuera del contenedor
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]

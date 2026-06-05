@@ -1,0 +1,22 @@
+# Usamos Node.js para servir la página web
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Instalamos pnpm, el gestor de paquetes que usaste
+RUN npm install -g pnpm
+
+# Copiamos primero los archivos de definición para optimizar la caché de Docker
+COPY package.json pnpm-lock.yaml* ./
+
+# Instalamos las librerías de React/Vite
+RUN pnpm install
+
+# Copiamos todos tus componentes y estilos
+COPY . .
+
+# Exponemos el puerto donde vive el frontend
+EXPOSE 5173
+
+# Arrancamos Vite y le decimos que escuche en todas las redes (--host)
+CMD ["pnpm", "run", "dev", "--host"]

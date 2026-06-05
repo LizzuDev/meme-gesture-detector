@@ -4,6 +4,16 @@ import { Edges, Environment } from '@react-three/drei'
 import * as THREE from 'three'
 import './App.css'
 
+/*
+ * Interfaz Principal de Usuario (Frontend)
+ * ----------------------------------------
+ * Este archivo construye todo lo que ves en la pantalla. Sus labores principales son:
+ * 1. Activar tu cámara web y capturar imágenes continuamente.
+ * 2. Enviar silenciosamente esas fotos a nuestro Servidor Python usando WebSockets.
+ * 3. Reaccionar a las respuestas del servidor para cambiar el meme en pantalla,
+ *    lanzar emojis flotantes, o rotar modelos en el Visor 3D.
+ */
+
 function MechanicalPart() {
   const metalMaterial = useMemo(() => new THREE.MeshStandardMaterial({
     color: "#b0b5b9",
@@ -102,7 +112,7 @@ function ModernArchitecture() {
   )
 }
 
-function HologramScene({ landmarks, modelIdx }: { landmarks: any, modelIdx: number }) {
+function HologramScene({ landmarks, gesture, modelIdx }: { landmarks: any, gesture: string | null, modelIdx: number }) {
   const meshRef = useRef<THREE.Group>(null)
   
   const targetRot = useRef({ x: 0, y: 0 })
@@ -114,11 +124,14 @@ function HologramScene({ landmarks, modelIdx }: { landmarks: any, modelIdx: numb
     if (meshRef.current) {
       if (landmarks && landmarks.length > 0) {
         const hand = landmarks[0]
-        const x = hand[0].x - 0.5
-        const y = hand[0].y - 0.5
         
-        targetRot.current.y = -x * Math.PI * 3
-        targetRot.current.x = y * Math.PI * 2
+        // Rotar solo cuando se hace FIST (puño cerrado)
+        if (gesture === "FIST") {
+          const x = hand[0].x - 0.5
+          const y = hand[0].y - 0.5
+          targetRot.current.y = -x * Math.PI * 3
+          targetRot.current.x = y * Math.PI * 2
+        }
 
         const thumb = hand[4]
         const index = hand[8]
@@ -193,7 +206,14 @@ const GESTURE_EMOJIS: Record<string, string> = {
   "THUMBS_DOWN": "👎",
   "GLASSES":    "🤓",
   "ITALIAN":    "🤌",
-  "SHH":        "🤫",
+  "GUN":        "🔫",
+  "PEDRO_RACCOON": "🦝",
+  "WAVING":     "👋",
+  "TONGUE_OUT":  "😛",
+  "HAPPY":      "😄",
+  "ANGRY":      "😠",
+  "WINKING":    "😉",
+  "SURPRISED":  "😱",
 }
 
 function ParticleSystem({ gesture }: { gesture: string | null }) {
@@ -292,7 +312,14 @@ function App() {
     "THUMBS_DOWN": "sad-hamster.jpg",
     "GLASSES":    "cat-glasses.jpg",
     "ITALIAN":    "cat-doubt.jpg",
-    "SHH":        "cat-shh.jpg",
+    "TONGUE_OUT":  "cat-tongue.jpg",
+    "HAPPY":      "monkey-happy-teeth.jpg",
+    "ANGRY":      "angry-face-cat.jpg",
+    "GUN":        "cat-gun-signal.jpg",
+    "PEDRO_RACCOON": "pedro-racoon.gif",
+    "WAVING":     "iguana-waving.gif",
+    "WINKING":    "bunny-winking.jpg",
+    "SURPRISED":  "cat-surprised.gif",
   }
 
   const memeSrc = gestureData?.gesture && gestureData.gesture !== "NONE" ? `/memes/${GESTURE_TO_FILE[gestureData.gesture]}` : null
@@ -442,7 +469,7 @@ function App() {
              </button>
 
              <Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
-               <HologramScene landmarks={gestureData?.landmarks} modelIdx={modelIdx} />
+               <HologramScene landmarks={gestureData?.landmarks} gesture={gestureData?.gesture} modelIdx={modelIdx} />
              </Canvas>
              
              <div style={{ position: 'absolute', bottom: 30, left: 0, width: '100%', textAlign: 'center' }}>

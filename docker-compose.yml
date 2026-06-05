@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  # Nuestro servidor inteligente que procesa las imágenes con IA
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Sincronizamos tu código en vivo para que los cambios se reflejen sin reiniciar
+      - .:/app
+    environment:
+      - WATCHFILES_FORCE_POLLING=true
+
+  # La cara visible de la aplicación donde están los memes
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
